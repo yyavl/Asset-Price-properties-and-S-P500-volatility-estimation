@@ -16,3 +16,56 @@ import seaborn as sns
 from scipy.integrate import quad
 import os
 
+#data scrapping from yahoo finance website
+def fetch_yahoo_finance_data(start_date, end_date, max_iterations=10):
+    data = []
+    iteration = 0
+
+    while iteration < max_iterations:
+        start_timestamp = int(pd.Timestamp(start_date).timestamp())
+        end_timestamp = int(pd.Timestamp(end_date).timestamp())
+
+        url = f'https://finance.yahoo.com/quote/%5EGSPC/history?period1={start_timestamp}&period2={end_timestamp}&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true'
+
+        user_agent = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
+        }
+
+        SP500data = requests.get(url, headers=user_agent)
+        soup = BeautifulSoup(SP500data.content, 'html.parser')
+
+        # Extract data from the table with class 'W(100%) M(0)'
+        SP500histdata = soup.find('table', class_='W(100%) M(0)')
+
+        if SP500histdata:
+            for row in SP500histdata.find_all('tr', class_="BdT Bdc($seperatorColor) Ta(end) Fz(s) Whs(nw)")[1:]:
+                columns = row.find_all('span')
+                if columns:
+                    date = columns[0].text.strip()
+                    open_price = float(columns[1].text.strip().replace(',', ''))
+                    high = float(columns[2].text.strip().replace(',', ''))
+                    low = float(columns[3].text.strip().replace(',', ''))
+                    close = float(columns[4].text.strip().replace(',', ''))
+                    data.append((date, open_price, high, low, close))
+
+            # Create a DataFrame from the extracted data
+            df = pd.DataFrame(data, columns=['Date', 'Open', 'High', 'Low', 'Close'])
+
+            # If the DataFrame is not empty, update the end_date for the next iteration
+            if not df.empty:
+                end_date = df['Date'].iloc[-1]
+                print(f"Retrieved data until {end_date}")
+                iteration += 1
+            else:
+                break
+        else:
+            break
+
+
+
+    return pd.DataFrame(data, columns=['Date', 'Open', 'High', 'Low', 'Close'])
+
+
+# Define start and end dates
+start_date = '1990-01-01'
+end_date = '2019-04-01'
