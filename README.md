@@ -1,0 +1,1 @@
+Examining asset price characteristics, particularly centered on the S&P500 index, utilizing Yahoo! Finance data spanning January 1990 to March 2019. The goal is to evaluate statistical properties (serial correlation, log return normality), and utilising the Yang and Zhang estimator for monthly S&P500 volatility computation and visualisation.
